@@ -2,10 +2,9 @@
 import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
-// 将 site 替换为你的 GitHub 用户名，例如：https://johndoe.github.io/news
 export default defineConfig({
-  site: 'https://用户名.github.io/news',
-  base: '/news',
+  // 如果你在 Cloudflare 上绑定了自定义域名，可以在这里配置，例如：'https://yourdomain.com'
+  // site: 'https://yourdomain.com',
   output: 'static',
   build: {
     format: 'directory',
