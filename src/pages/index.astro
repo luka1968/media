@@ -81,7 +81,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       'Brave New Coin': 'Analysis',
     };
 
-    const base = '/news';
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     container.innerHTML = items.map(item => {
       const imgHtml = item.imageUrl 
         ? `<div class="news-image-container"><img class="news-image" src="${item.imageUrl}" alt="Thumbnail" loading="lazy" /></div>` 
