@@ -1,0 +1,125 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'NewsZero',
+  description = 'Read news on demand.',
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <style is:global>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      html { font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f0f0f0; }
+      body { color: #111; line-height: 1.4; background: #fff; max-width: 1200px; margin-left: auto; margin-right: auto; min-height: 100vh; position: relative; }
+      a { text-decoration: none; color: inherit; }
+
+      /* Top Nav (Colorful Tabs) */
+      .top-tabs { display: flex; overflow-x: auto; scrollbar-width: none; background: #fff; padding-top: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e8e8e8;}
+      .top-tabs::-webkit-scrollbar { display: none; }
+      .tab { padding: 12px 18px; color: #fff; font-weight: bold; white-space: nowrap; flex-shrink: 0; font-size: 0.95rem; border-top-left-radius: 12px; }
+      .tab[data-source="all"] { background: #f65e5d; } /* Red */
+      .tab[data-source="CoinDesk"] { background: #ffb13b; } /* Orange */
+      .tab[data-source="Bitcoin Magazine"] { background: #32c4a4; } /* Teal */
+      .tab[data-source="Bitcoin.com News"] { background: #4ba6f5; } /* Light Blue */
+      .tab[data-source="Cointelegraph"] { background: #aa50bd; } /* Purple */
+      .tab[data-source="Finance Magnates"] { background: #ef4c88; } /* Pink */
+      .tab[data-source="NewsBTC"] { background: #3b54ac; } /* Dark Blue */
+      .tab[data-source="CryptoNinjas"] { background: #8bc34a; } /* Green */
+      .tab[data-source="Brave New Coin"] { background: #ff7043; border-top-right-radius: 12px; } /* Coral */
+
+      /* Search Bar */
+      .search-container { padding: 10px 15px; background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center;}
+      .search-input { width: 100%; padding: 10px 15px; border-radius: 8px; border: none; background: #eef1f4; font-size: 0.9rem; outline: none; text-align: center; color: #555;}
+
+
+      /* Circular Categories */
+      .circle-categories { display: flex; padding: 20px 15px; gap: 15px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #eee; background: #fff; position: sticky; top: 0; z-index: 100;}
+      .circle-categories::-webkit-scrollbar { display: none; }
+      .circle-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; width: 70px; cursor: pointer; }
+      .circle-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 2px solid transparent; transition: all 0.2s;}
+      .circle-img-wrap { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 2px solid transparent; transition: all 0.2s;}
+      .circle-label { font-size: 0.75rem; font-weight: 600; color: #555; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; transition: color 0.2s;}
+      .circle-item.active .circle-img, .circle-item.active .circle-img-wrap { border-color: #f65e5d; transform: scale(1.05); }
+      .circle-item.active .circle-label { color: #f65e5d; }
+
+      /* PC Full Screen Display Adjustments */
+      @media (min-width: 768px) {
+        .circle-categories { padding: 30px 40px; justify-content: center; gap: 30px; }
+        .circle-img, .circle-img-wrap { width: 72px; height: 72px; }
+        .circle-label { font-size: 0.9rem; }
+        .search-container { padding: 20px 40px; }
+        .search-input { max-width: 500px; padding: 12px 20px; font-size: 1rem; }
+      }
+      
+      /* News Feed */
+      main { padding: 0 15px; }
+      @media (min-width: 768px) {
+        main { padding: 0 40px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Source Circular Categories -->
+    <div class="circle-categories">
+      <a href="#" class="circle-item src-btn" data-source="all">
+        <div class="circle-img-wrap" style="background:#f65e5d"><span style="color:#fff">All</span></div>
+        <span class="circle-label">All News</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="CoinDesk">
+        <img class="circle-img" src="https://www.coindesk.com/resizer/bQ3YgOQ81Qp3z-xR3q062r-nC6I=/144x144/filters:format(png):quality(70)/cloudfront-us-east-1.images.arcpublishing.com/coindesk/FVKV6W5XF5B4RB2J4Z4Q5Y2RVI.png" alt="CoinDesk" onerror="this.src='https://via.placeholder.com/64?text=CD'" />
+        <span class="circle-label">CoinDesk</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="Bitcoin Magazine">
+        <img class="circle-img" src="https://bitcoinmagazine.com/.image/ar_1:1%2Cc_fill%2Ccs_srgb%2Cfl_progressive%2Cq_auto:good%2Cw_1200/MTc5Mjk3ODQ0OTg1OTMyNjEx/bitcoin-magazine-logo.jpg" alt="BTC Mag" onerror="this.src='https://via.placeholder.com/64?text=BM'" />
+        <span class="circle-label">BTC Mag</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="Cointelegraph">
+        <img class="circle-img" src="https://cointelegraph.com/apple-touch-icon.png" alt="Cointelegraph" onerror="this.src='https://via.placeholder.com/64?text=CT'" />
+        <span class="circle-label">Cointelegraph</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="Bitcoin.com News">
+        <img class="circle-img" src="https://news.bitcoin.com/wp-content/uploads/2021/06/bitcoin-com-logo-1.png" alt="Bitcoin.com" onerror="this.src='https://via.placeholder.com/64?text=BC'" />
+        <span class="circle-label">Bitcoin.com</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="Finance Magnates">
+        <div class="circle-img-wrap" style="background:#ef4c88"><span style="color:#fff">FM</span></div>
+        <span class="circle-label">Magnates</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="NewsBTC">
+        <div class="circle-img-wrap" style="background:#3b54ac"><span style="color:#fff">NB</span></div>
+        <span class="circle-label">NewsBTC</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="CryptoNinjas">
+        <div class="circle-img-wrap" style="background:#8bc34a"><span style="color:#fff">CN</span></div>
+        <span class="circle-label">Ninjas</span>
+      </a>
+      <a href="#" class="circle-item src-btn" data-source="Brave New Coin">
+        <div class="circle-img-wrap" style="background:#ff7043"><span style="color:#fff">BNC</span></div>
+        <span class="circle-label">BraveNewCoin</span>
+      </a>
+    </div>
+
+    <!-- Search / Translation Bar Mock -->
+    <div class="search-container">
+      <input type="search" id="search-input" class="search-input" placeholder="Search news..." autocomplete="off" />
+    </div>
+
+
+    <main id="main-content">
+      <slot />
+    </main>
+  </body>
+</html>

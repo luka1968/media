@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="NewsZero — Rich Crypto News">
+  <div id="status">Loading news...</div>
+  <div id="news-container"></div>
+</BaseLayout>
+
+<style is:global>
+  #news-container { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .news-card { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; text-decoration: none; color: inherit; transition: all 0.2s ease; background: #fff; }
+  .news-card:hover { background: #fdfdfd; }
+  .news-card:last-child { border-bottom: none; }
+  .news-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+  .news-category { font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 4px; }
+  .news-title { font-size: 1.1rem; font-weight: 500; line-height: 1.35; color: #111; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; }
+  .news-meta { font-size: 0.75rem; color: #888; display: flex; align-items: center; justify-content: space-between; }
+  .news-more { font-weight: bold; color: #bbb; letter-spacing: 1px; font-size: 1rem; line-height: 1;}
+  .news-image-container { width: 110px; height: 80px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #f0f0f0; }
+  .news-image { width: 100%; height: 100%; object-fit: cover; }
+  
+  /* Active filter visual feedback */
+  .tab { opacity: 0.8; transition: opacity 0.2s; }
+  .tab.active { opacity: 1; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2); }
+
+  /* PC Responsive */
+  @media (min-width: 768px) {
+    #news-container { grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 15px 0; }
+    .news-card { padding: 15px; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .news-card:last-child { border-bottom: 1px solid #eee; }
+    .news-image-container { width: 130px; height: 95px; }
+  }
+
+  @media (min-width: 1024px) {
+    #news-container { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+
+<script>
+  interface NewsItem {
+    id: string;
+    title: string;
+    source: string;
+    url: string;
+    summary?: string;
+    imageUrl?: string | null;
+    time: string;
+  }
+
+  let allItems: NewsItem[] = [];
+  let currentSource: string = 'all';
+  let currentQuery: string = '';
+
+  function parseTime(timeStr: string): number {
+    return new Date(timeStr.replace(' ', 'T').replace(/ \+/, '+').replace('T+', '+0800')).getTime() || 0;
+  }
+
+  function formatRelativeTime(timeStr: string): string {
+    const time = parseTime(timeStr);
+    const diffHours = Math.floor((Date.now() - time) / (1000 * 60 * 60));
+    if (diffHours < 24) return diffHours <= 0 ? 'Just now' : `${diffHours}h`;
+    return `${Math.floor(diffHours / 24)}d`;
+  }
+
+  function renderItems(items: NewsItem[]) {
+    const container = document.getElementById('news-container')!;
+    if (!items.length) {
+      container.innerHTML = '<p style="color:#888;font-size:.85rem;padding:20px 0;text-align:center;">No news available.</p>';
+      return;
+    }
+    
+    // Add dummy categories mapping for the UI
+    const categoryMap: Record<string, string> = {
+      'CoinDesk': 'Markets',
+      'Bitcoin Magazine': 'Bitcoin',
+      'Cointelegraph': 'Technology',
+      'Finance Magnates': 'Economy',
+      'NewsBTC': 'Trading',
+      'CryptoNinjas': 'DeFi',
+      'Brave New Coin': 'Analysis',
+    };
+
+    const base = '/news';
+    container.innerHTML = items.map(item => {
+      const imgHtml = item.imageUrl 
+        ? `<div class="news-image-container"><img class="news-image" src="${item.imageUrl}" alt="Thumbnail" loading="lazy" /></div>` 
+        : '';
+      
+      const category = categoryMap[item.source] || 'Crypto';
+      const articleUrl = `${base}/article/${item.id}`;
+      
+      return `
+      <a href="${articleUrl}" class="news-card">
+        <div class="news-content">
+          <div>
+            <div class="news-category">${category}</div>
+            <div class="news-title">${item.title}</div>
+          </div>
+          <div class="news-meta">
+            <span>${item.source} · ${formatRelativeTime(item.time)}</span>
+            <span class="news-more">•••</span>
+          </div>
+        </div>
+        ${imgHtml}
+      </a>
+    `}).join('');
+  }
+
+  function applyFilter(source: string) {
+    currentSource = source;
+    document.querySelectorAll<HTMLAnchorElement>('.src-btn').forEach(btn => {
+      const isActive = btn.dataset.source === source;
+      btn.classList.toggle('active', isActive);
+    });
+    applySearch(currentQuery);
+  }
+
+  function applySearch(query: string) {
+    currentQuery = query;
+    const q = query.trim().toLowerCase();
+    let filtered = currentSource === 'all'
+      ? allItems
+      : allItems.filter(item => item.source === currentSource);
+    
+    if (q) {
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(q) ||
+        item.source.toLowerCase().includes(q)
+      );
+    }
+    
+    filtered = [...filtered].sort((a, b) => parseTime(b.time) - parseTime(a.time));
+    renderItems(filtered);
+  }
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const navBtn = target.closest<HTMLAnchorElement>('.src-btn');
+    if (navBtn) {
+      e.preventDefault();
+      if (navBtn.dataset.source) applyFilter(navBtn.dataset.source);
+    }
+  });
+
+  const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      applySearch(searchInput.value);
+    });
+  }
+
+  async function load() {
+    const status = document.getElementById('status')!;
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+      const res  = await fetch(`${base}/news.json?t=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      allItems = await res.json() as NewsItem[];
+      status.style.display = 'none';
+      applyFilter(currentSource);
+    } catch (err) {
+      status.textContent = 'Failed to load, please refresh and try again later.';
+      console.error(err);
+    }
+  }
+
+  load();
+</script>

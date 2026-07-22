@@ -1,0 +1,142 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { newsItems } from '../../data/news';
+
+export async function getStaticPaths() {
+  return newsItems.map((item) => ({
+    params: { id: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+---
+
+<BaseLayout title={`${item.title} - ${item.source} | 零新聞`} description={item.summary}>
+  <article class="article-detail">
+    <div class="article-meta">
+      <span class="postdate">{item.time}</span> &bull; 
+      <span class="author">{item.source}</span>
+    </div>
+    
+    <h1 class="article-title">{item.title}</h1>
+    
+    {item.content ? (
+      <div class="article-content" set:html={item.content} />
+    ) : item.summary && (
+      <div class="article-summary">
+        {item.summary}
+      </div>
+    )}
+    
+    <div class="article-action">
+      <a href={item.url} target="_blank" rel="noopener noreferrer" class="read-original-btn">
+        阅读原文 (Original Article) ↗
+      </a>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article-detail {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+
+  .article-meta {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .article-meta .author {
+    color: #555;
+  }
+
+  .article-title {
+    font-size: 1.6rem;
+    line-height: 1.4;
+    color: #222;
+    margin-bottom: 24px;
+    font-weight: 600;
+  }
+
+  .article-summary {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #444;
+    background: #f8f9fa;
+    padding: 16px 20px;
+    border-left: 4px solid #1a0dab;
+    border-radius: 4px;
+    margin-bottom: 30px;
+  }
+
+  .article-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 30px;
+  }
+
+  /* Target elements inside the injected HTML content */
+  .article-content :global(p) {
+    margin-bottom: 1.5em;
+  }
+
+  .article-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5em auto;
+    border-radius: 6px;
+  }
+
+  .article-content :global(a) {
+    color: #1a0dab;
+    text-decoration: none;
+  }
+  
+  .article-content :global(a:hover) {
+    text-decoration: underline;
+  }
+
+  .article-content :global(h2), .article-content :global(h3) {
+    margin-top: 2em;
+    margin-bottom: 1em;
+    color: #111;
+  }
+
+  .article-action {
+    margin-top: 40px;
+    text-align: center;
+  }
+
+  .read-original-btn {
+    display: inline-block;
+    background: #1a0dab;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .read-original-btn:hover {
+    background: #110878;
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  .read-original-btn:visited {
+    color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .article-title {
+      font-size: 1.3rem;
+    }
+  }
+</style>

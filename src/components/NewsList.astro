@@ -1,0 +1,44 @@
+---
+import type { NewsItem } from '../data/news';
+
+interface Props {
+  items: NewsItem[];
+}
+
+const { items } = Astro.props;
+
+function getDisplayTime(item: NewsItem): string {
+  if (item.time) return item.time;
+  if (item.publishedAt) {
+    const date = new Date(item.publishedAt);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  }
+  return '';
+}
+---
+
+{items.length > 0 ? (
+  <ul class="news-list" id="news-list">
+    {items.map((item) => (
+      <li class="news-item">
+        <div class="news-meta">
+          <span class="news-time">{getDisplayTime(item)}</span>
+          <span>•</span>
+          <span class="news-source">{item.source}</span>
+        </div>
+        <h3 class="news-title">
+          <a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a>
+        </h3>
+      </li>
+    ))}
+  </ul>
+) : (
+  <div class="empty-state">
+    <p>No news available</p>
+  </div>
+)}

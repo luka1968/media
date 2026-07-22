@@ -1,0 +1,48 @@
+name: Daily News Update
+
+on:
+  schedule:
+    # 每天 UTC 时间 0:00（北京时间早上 8:00）自动执行一次
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch latest news
+        run: node scripts/fetch-news.js
+
+      - name: Commit and push news.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/news.json src/data/news.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update news.json [skip ci]"
+            git push
+          else
+            echo "No changes in news.json to commit."
+          fi
+
+      - name: Trigger GitHub Pages deploy workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml || echo "Deploy workflow triggered."
