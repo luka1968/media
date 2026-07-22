@@ -65,7 +65,28 @@ async function fetchFullContent(url) {
     const doc = new JSDOM(html, { url });
     const reader = new Readability(doc.window.document);
     const article = reader.parse();
-    return article ? article.content : null;
+    if (!article || !article.content) return null;
+
+    // Truncate to half of the content to avoid copyright issues
+    const contentDoc = new JSDOM(article.content);
+    const body = contentDoc.window.document.body;
+    const children = Array.from(body.children);
+    
+    if (children.length > 2) {
+      const keepCount = Math.ceil(children.length / 2);
+      for (let i = keepCount; i < children.length; i++) {
+        children[i].remove();
+      }
+      
+      const ellipsis = contentDoc.window.document.createElement('p');
+      ellipsis.style.color = '#888';
+      ellipsis.style.fontStyle = 'italic';
+      ellipsis.style.marginTop = '20px';
+      ellipsis.textContent = '... [Article truncated. Click "Read Original Article" to read the full story on the original website]';
+      body.appendChild(ellipsis);
+    }
+
+    return body.innerHTML;
   } catch (err) {
     console.error(`Error fetching full content for ${url}:`, err.message);
     return null;
