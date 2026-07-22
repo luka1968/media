@@ -54,21 +54,10 @@ function formatTime(dateObj) {
   return `${utc8.getUTCFullYear()}-${pad(utc8.getUTCMonth() + 1)}-${pad(utc8.getUTCDate())} ${pad(utc8.getUTCHours())}:${pad(utc8.getUTCMinutes())}:${pad(utc8.getUTCSeconds())} +0800`;
 }
 
-async function fetchFullContent(url) {
+function truncateHtml(htmlString) {
+  if (!htmlString) return '';
   try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsZero/1.0 RSS Reader' },
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!response.ok) return null;
-    const html = await response.text();
-    const doc = new JSDOM(html, { url });
-    const reader = new Readability(doc.window.document);
-    const article = reader.parse();
-    if (!article || !article.content) return null;
-
-    // Truncate to half of the content to avoid copyright issues
-    const contentDoc = new JSDOM(article.content);
+    const contentDoc = new JSDOM(htmlString);
     const body = contentDoc.window.document.body;
     const children = Array.from(body.children);
     
@@ -84,9 +73,26 @@ async function fetchFullContent(url) {
       ellipsis.style.marginTop = '20px';
       ellipsis.textContent = '... [Article truncated. Click "Read Original Article" to read the full story on the original website]';
       body.appendChild(ellipsis);
+      return body.innerHTML;
     }
+    return htmlString;
+  } catch (e) {
+    return htmlString;
+  }
+}
 
-    return body.innerHTML;
+async function fetchFullContent(url) {
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsZero/1.0 RSS Reader' },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) return null;
+    const html = await response.text();
+    const doc = new JSDOM(html, { url });
+    const reader = new Readability(doc.window.document);
+    const article = reader.parse();
+    return article ? article.content : null;
   } catch (err) {
     console.error(`Error fetching full content for ${url}:`, err.message);
     return null;
@@ -141,6 +147,9 @@ async function fetchAllNews() {
 
         let fullContent = await fetchFullContent(url);
         if (!fullContent) fullContent = item.content || `<p>${summary}</p>`;
+        
+        // 强制所有内容（无论是抓取的还是 RSS 自带的）都只保留 50%
+        fullContent = truncateHtml(fullContent);
 
         allNews.push({
           id,
